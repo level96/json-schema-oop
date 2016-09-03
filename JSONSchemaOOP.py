@@ -1,5 +1,7 @@
 # coding: utf-8
 
+from jsonschema import Draft4Validator
+
 
 class JSONType(object):
     type = None
@@ -103,10 +105,9 @@ class JSONArray(JSONType):
 
     def render(self):
         obj = super(JSONArray, self).render()
-        obj.update({
-            'items': [i.render() for i in self.items]
-        })
 
+        if self.items:
+            obj.update(items= [i.render() for i in self.items])
         if self.unique_items:
             obj.update(uniqueItems=self.unique_items)
         if self.min_items:
@@ -119,12 +120,13 @@ class JSONArray(JSONType):
 class JSONObject(JSONType):
     type = 'object'
     required = []
-    properties = {'type': JSONNull()}
+    properties = {}
     min_properties = None
     max_properties = None
 
     def __init__(self, required=None, properties=None, min_properties=None, max_properties=None):
         super(JSONObject, self).__init__()
+
         if required:
             self.required = required
         if properties:
@@ -143,7 +145,7 @@ class JSONObject(JSONType):
             self.required = list(set(self.required) - set(required_remove))
 
         properties_add = self.properties_add()
-        properties_remove = self.properties_remove()
+        properties_remove = set(self.properties_remove()) & set(self.properties.keys())
 
         if properties_add:
             self.properties.update(properties_add)
@@ -165,8 +167,9 @@ class JSONObject(JSONType):
 
     def render(self):
         obj = super(JSONObject, self).render()
-        obj.update(properties={key: value.render() for key, value in self.properties.items()})
 
+        if self.properties:
+            obj.update(properties={key: value.render() for key, value in self.properties.items()})
         if self.required:
             obj.update(required=self.required)
         if self.min_properties:
@@ -187,3 +190,6 @@ class JSONSchema(JSONObject):
         if self.definitions:
             schema.update(definitions={key: value.render() for key, value in self.definitions.items()})
         return schema
+
+    def validate(self, data):
+        Draft4Validator(self.render()).validate(data)
