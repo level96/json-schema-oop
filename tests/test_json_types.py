@@ -6,7 +6,7 @@ from jsonschema.exceptions import ValidationError
 import JSONSchemaOOP
 
 
-class TestJSONType:(object)
+class TestJSONType(object):
     @pytest.mark.parametrize(('parameters', 'expected'), [
         ({}, {'type': 'number'}),
         ({'minimum': 1}, {'type': 'number', 'minimum': 1}),
