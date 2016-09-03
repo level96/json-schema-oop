@@ -3,7 +3,7 @@
 import pytest
 from jsonschema.exceptions import ValidationError
 
-import JSONSchemaOOP
+from jsonschemaoop import JSONSchemaOOP
 
 
 class TestJSONType(object):
