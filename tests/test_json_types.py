@@ -144,13 +144,24 @@ class AddressJSONSchemaObjectV2(AddressJSONSchemaObject):
     def properties_remove(self):
         return ['city']
 
-
-class AddressJSONSchemaObjectV3(AddressJSONSchemaObjectV2):
     def required_add(self):
         return ['location']
 
     def properties_add(self):
         return {'location': JSONSchemaOOP.JSONString()}
+
+
+class AddressJSONSchemaObjectV3(AddressJSONSchemaObjectV2):
+    def required_add(self):
+        return super(AddressJSONSchemaObjectV3, self).required_add() + ['staff']
+
+    def properties_add(self):
+        obj = super(AddressJSONSchemaObjectV3, self).properties_add()
+        obj.update(staff=JSONSchemaOOP.JSONArray(
+            min_items=1,
+            items=[JSONSchemaOOP.JSONString()]
+        ))
+        return obj
 
 
 class TestJSONObjectInheritance(object):
@@ -176,23 +187,6 @@ class TestJSONObjectInheritance(object):
         inst = AddressJSONSchemaObjectV2()
 
         expected = {
-            'required': ['street', 'street_number', 'zip'],
-            'type': 'object',
-            'properties': {
-                'street': {'type': 'string'},
-                'street_number': {'type': 'string'},
-                'zip': {'type': ['number', 'string']}
-            }
-        }
-
-        inst_obj = inst.render()
-
-        assert inst_obj == expected
-
-    def test_inherit_json_object_adds_attributes(self):
-        inst = AddressJSONSchemaObjectV3()
-
-        expected = {
             'required': ['street', 'zip', 'street_number', 'location'],
             'type': 'object',
             'properties': {
@@ -207,19 +201,71 @@ class TestJSONObjectInheritance(object):
 
         assert inst_obj == expected
 
+    def test_inherit_json_object_adds_attributes(self):
+        inst = AddressJSONSchemaObjectV3()
+
+        expected = {
+            'required': ['staff', 'street', 'zip', 'street_number', 'location'],
+            'type': 'object',
+            'properties': {
+                'location': {'type': 'string'},
+                'street': {'type': 'string'},
+                'zip': {'type': ['number', 'string']},
+                'street_number': {'type': 'string'},
+                'staff': {
+                    'minItems': 1,
+                    'items': [{'type': 'string'}],
+                    'type': 'array'
+                }
+            }
+        }
+
+        inst_obj = inst.render()
+
+        assert inst_obj == expected
+
 
 class TestFullJSONSchema(object):
     @pytest.mark.parametrize(('data', 'is_valid'), [
-        ({'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': 12345, 'location': 'Berlin'}}, True),
-        ({'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': '12345', 'location': 'Berlin'}}, True),
+        (
+            {'address': {
+                'street': 'musterstreet',
+                'street_number': '12 a',
+                'zip': 12345,
+                'location': 'Berlin',
+                'staff': ['Hans']
+            }},
+            True
+        ),
+        (
+            {'address': {
+                'street': 'musterstreet',
+                'street_number': '12 a',
+                'zip': '12345',
+                'location': 'Berlin',
+                'staff': ['Hans']
+            }},
+            True
+        ),
 
-        # Errors
+        # # Errors
         ({'address': {}}, False),
         ({'address': 'haha'}, False),
         ({'address': {'street': 'musterstreet'}}, False),
         ({'address': {'street': 'musterstreet', 'street_number': '12 a'}}, False),
+        (
+            {'address': {
+                'street': 'musterstreet',
+                'street_number': '12 a',
+                'zip': '12345',
+                'location': 'Berlin',
+                'staff': []
+            }},
+            False
+        ),
         ({'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], }}, False),
         ({'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], 'location': 'Berlin'}}, False),
+
     ])
     def test_address_full_schema(self, data, is_valid):
         class MySchema(JSONSchemaOOP.JSONSchema):
@@ -227,10 +273,15 @@ class TestFullJSONSchema(object):
                 'address': JSONSchemaOOP.JSONSchemaReference('address')
             }
             definitions = {
+                'address': AddressJSONSchemaObject()
+            }
+
+        class MySchemaV3(MySchema):
+            definitions = {
                 'address': AddressJSONSchemaObjectV3()
             }
 
-        inst = MySchema()
+        inst = MySchemaV3()
 
         inst_obj = inst.render()
         expected = {
@@ -241,13 +292,18 @@ class TestFullJSONSchema(object):
             },
             'definitions': {
                 'address': {
-                    'required': ['street', 'zip', 'street_number', 'location'],
+                    'required': ['staff', 'street', 'zip', 'street_number', 'location'],
                     'type': 'object',
                     'properties': {
+                        'location': {'type': 'string'},
                         'street': {'type': 'string'},
-                        'street_number': {'type': 'string'},
                         'zip': {'type': ['number', 'string']},
-                        'location': {'type': 'string'}
+                        'street_number': {'type': 'string'},
+                        'staff': {
+                            'type': 'array',
+                            'minItems': 1,
+                            'items': [{'type': 'string'}]
+                        }
                     }
                 }
             }
@@ -260,3 +316,5 @@ class TestFullJSONSchema(object):
         else:
             with pytest.raises(ValidationError):
                 inst.validate(data)
+
+
