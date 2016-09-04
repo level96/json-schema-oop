@@ -30,10 +30,16 @@ class TestJSONType(object):
         ({'min_length': 1}, {'type': 'string', 'minLength': 1}),
         ({'max_length': 10}, {'type': 'string', 'maxLength': 10}),
         ({'pattern': '\\d'}, {'type': 'string', 'pattern': '\\d'}),
+        (
+            {'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
+            {'type': 'string', 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME}
+        ),
 
         (
-            {'min_length': 1, 'max_length': 10, 'pattern': '\\d'},
-            {'type': 'string', 'minLength': 1, 'maxLength': 10, 'pattern': '\\d'}
+            {'min_length': 1, 'max_length': 10, 'pattern': '\\d', 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
+            {'type': 'string', 'minLength': 1, 'maxLength': 10, 'pattern': '\\d',
+             'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME
+            }
         ),
     ])
     def test_json_string(self, parameters, expected):
@@ -81,10 +87,25 @@ class TestJSONType(object):
             {'properties': {'name': JSONSchemaOOP.JSONString()}, 'max_properties': 10},
             {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'maxProperties': 10}
         ),
+        (
+            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'additional_properties': False},
+            {'additionalProperties': False, 'type': 'object', 'properties': {'name': {'type': 'string'}}}
+        ),
 
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'min_properties': 1, 'max_properties': 10},
-            {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'minProperties': 1, 'maxProperties': 10}
+            {
+                'properties': {'name': JSONSchemaOOP.JSONString()},
+                'min_properties': 1,
+                'max_properties': 10,
+                'additional_properties': False
+            },
+            {
+                'type': 'object',
+                'properties': {'name': {'type': 'string'}},
+                'additionalProperties': False,
+                'minProperties': 1,
+                'maxProperties': 10
+            }
         ),
     ])
     def test_json_object(self, parameters, expected):

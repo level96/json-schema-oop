@@ -44,18 +44,28 @@ class JSONNumber(JSONType):
 
 
 class JSONString(JSONType):
+    FORMAT_DATETIME = 'date-time'
+    FORMAT_EMAIL = 'date-email'
+    FORMAT_URI = 'date-uri'
+    FORMAT_HOST_NAME = 'host-name'
+    FORMAT_IPV4 = 'ipv4'
+    FORMAT_IPV6 = 'ipv6'
+
     type = 'string'
     min_length = None
     max_length = None
     pattern = None
+    format = None
 
-    def __init__(self, min_length=None, max_length=None, pattern=None):
+    def __init__(self, min_length=None, max_length=None, pattern=None, format=None):
         if min_length:
             self.min_length = min_length
         if max_length:
             self.max_length = max_length
         if pattern:
             self.pattern = pattern
+        if format:
+            self.format = format
 
     def render(self):
         data = super(JSONString, self).render()
@@ -65,6 +75,8 @@ class JSONString(JSONType):
             data.update(maxLength=self.max_length)
         if self.pattern:
             data.update(pattern=self.pattern)
+        if self.format:
+            data.update(format=self.format)
         return data
 
 
@@ -123,8 +135,10 @@ class JSONObject(JSONType):
     properties = {}
     min_properties = None
     max_properties = None
+    additional_properties = None
 
-    def __init__(self, required=None, properties=None, min_properties=None, max_properties=None):
+    def __init__(self, required=None, properties=None, min_properties=None,
+                 max_properties=None, additional_properties=None):
         super(JSONObject, self).__init__()
 
         if required:
@@ -135,6 +149,8 @@ class JSONObject(JSONType):
             self.min_properties = min_properties
         if max_properties:
             self.max_properties = max_properties
+        if additional_properties is not None:
+            self.additional_properties = additional_properties
 
         required_add = self.required_add()
         required_remove = self.required_remove()
@@ -176,6 +192,8 @@ class JSONObject(JSONType):
             obj.update(minProperties=self.min_properties)
         if self.max_properties:
             obj.update(maxProperties=self.max_properties)
+        if self.additional_properties is not None:
+            obj.update(additionalProperties=self.additional_properties)
 
         return obj
 
