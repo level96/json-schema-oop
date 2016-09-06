@@ -1,4 +1,4 @@
-Write DRY JSON-Schema with Python classes, inherit classes for new JSON-Schema-Version   
+Write DRY JSON-Schema with Python classes, inherit classes for new JSON-Schema-Version
 
 This supports only jsonschema Draft4Validator at this time
 
@@ -7,10 +7,10 @@ This supports only jsonschema Draft4Validator at this time
 
 
 
-# Install 
+# Install
 
     pip install https://github.com/level96/json-schema-oop.git#egg=jsonschemaoop
-    
+
 # Example
 
 We want to validate an address-schema with following data
@@ -19,8 +19,8 @@ We want to validate an address-schema with following data
 ```python
 location = {
     'address': {
-        'street': 'john doe street', 
-        'street_number': '12 a', 
+        'street': 'john doe street',
+        'street_number': '12 a',
         'zip': '12345',
         'city': 'Berlin'
     }
@@ -31,7 +31,7 @@ location = {
 Create a schema object
 
 ```python
-from JSONSchemaOOP import JSONObject, JSONString, JSONType, JSONNumber 
+from JSONSchemaOOP import JSONObject, JSONString, JSONType, JSONNumber
 
 class AddressJSONSchemaObject(JSONObject):
     required = ['street', 'street_number', 'zip', 'city']
@@ -43,7 +43,7 @@ class AddressJSONSchemaObject(JSONObject):
     }
 ```
 
-Create a schema, put SchemaObject to the definitions or properties 
+Create a schema, put SchemaObject to the definitions or properties
 
 
 ```python
@@ -74,8 +74,8 @@ Let's reflect this to our `AddressJSONSchemaObject` and add a new Version `Addre
 ```Python
 location = {
     'address': {
-        'street': 'john doe street', 
-        'street_number': '12 a', 
+        'street': 'john doe street',
+        'street_number': '12 a',
         'zip': '12345',
         'location': 'Berlin',
         'staff': ['John']
@@ -85,25 +85,24 @@ location = {
 
 ```python
 class AddressJSONSchemaObjectV2(AddressJSONSchemaObject):
-    def required_remove(self):
-        return super(AddressJSONSchemaObjectV2, self).required_add() + ['city']
+    def get_required(self):
+        required = super(AddressJSONSchemaObjectV2, self).get_required()
+        required.discard('city')
+        required.add('location')
+        return required
 
-    def properties_remove(self):
-        return super(AddressJSONSchemaObjectV2, self).properties_remove() + ['city']
-       
-    def required_add(self):
-        return super(AddressJSONSchemaObjectV2, self).required_add() + ['location']
-
-    def properties_add(self):
-        obj = super(AddressJSONSchemaObjectV2, self).properties_add()
-        obj.update(
+    def get_properties(self):
+        properties = super(AddressJSONSchemaObjectV2, self).get_properties()
+        properties.pop('city', None)
+        properties.update(
             location=JSONString(),
-            staff=JSONSchemaOOP.JSONArray(
+            staff=JSONArray(
                 min_items=1,
                 items=[JSONSchemaOOP.JSONString()]
             )
         )
-        return obj
+        return properties
+
 ```
 
 Now update `AddressSchema`
