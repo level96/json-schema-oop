@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from copy import deepcopy
 from jsonschema import Draft4Validator
 
 
@@ -106,32 +107,28 @@ class JSONArray(JSONType):
     def __init__(self, items=[], unique_items=None, min_items=None, max_items=None):
         super(JSONArray, self).__init__()
 
-        if items:
-            self.items = items
-        if unique_items:
-            self.unique_items = unique_items
-        if min_items:
-            self.min_items = min_items
-        if max_items:
-            self.max_items = max_items
+        self._items = items if items is not None else self.items
+        self._unique_items = unique_items if unique_items is not None else self.unique_items
+        self._min_items = min_items if min_items is not None else self.min_items
+        self._max_items = max_items if max_items is not None else self.max_items
 
     def render(self):
         obj = super(JSONArray, self).render()
 
-        if self.items:
-            obj.update(items= [i.render() for i in self.items])
-        if self.unique_items:
-            obj.update(uniqueItems=self.unique_items)
-        if self.min_items:
-            obj.update(minItems=self.min_items)
-        if self.max_items:
-            obj.update(maxItems=self.max_items)
+        if self._items:
+            obj.update(items=[i.render() for i in self._items])
+        if self._unique_items:
+            obj.update(uniqueItems=self._unique_items)
+        if self._min_items:
+            obj.update(minItems=self._min_items)
+        if self._max_items:
+            obj.update(maxItems=self._max_items)
         return obj
 
 
 class JSONObject(JSONType):
     type = 'object'
-    required = []
+    required = set()
     properties = {}
     min_properties = None
     max_properties = None
@@ -141,59 +138,71 @@ class JSONObject(JSONType):
                  max_properties=None, additional_properties=None):
         super(JSONObject, self).__init__()
 
-        if required:
-            self.required = required
-        if properties:
-            self.properties = properties
-        if min_properties:
-            self.min_properties = min_properties
-        if max_properties:
-            self.max_properties = max_properties
+        self._required = set(required if required is not None else deepcopy(self.required))
+        self._properties = properties if properties is not None else deepcopy(self.properties)
+        self._min_properties = min_properties if min_properties is not None else deepcopy(self.min_properties)
+        self._max_properties = max_properties if max_properties is not None else deepcopy(self.max_properties)
+
         if additional_properties is not None:
-            self.additional_properties = additional_properties
+            self._additional_properties = additional_properties
+        else:
+            self._additional_properties = deepcopy(self.additional_properties)
 
-        required_add = self.required_add()
-        required_remove = self.required_remove()
+    def get_required(self):
+        """
+        Required must be a SET, because this function is called 2 times.
+        On child-classes and in the render-function.
 
-        if required_add:
-            self.required = list(set(self.required + required_add))
-        if required_remove:
-            self.required = list(set(self.required) - set(required_remove))
+        Remove must not raise errors.
+        Add elements must prevent duplicate items.
 
-        properties_add = self.properties_add()
-        properties_remove = set(self.properties_remove()) & set(self.properties.keys())
+        Use `discard` to safe remove element from set even if it not exists
+        Use `add` to safe add element to set even if it exists
 
-        if properties_add:
-            self.properties.update(properties_add)
-        if properties_remove:
-            for k in properties_remove:
-                self.properties.pop(k)
+        > def get_required(self):
+        >     required = super(self.__class__, self).get_required()
+        >     required.discard('OLD_ELEMENT')
+        >     required.add('NEW_ELEMENT')
+        >     return required
 
-    def required_add(self):
-        return []
+        """
+        return self._required
 
-    def required_remove(self):
-        return []
+    def get_properties(self):
+        """
+        Properties is a dict, because this function is called 2 times.
+        On child-classes and in the render-function.
 
-    def properties_add(self):
-        return {}
+        Remove must not raise errors.
+        Add elements must prevent duplicate items.
 
-    def properties_remove(self):
-        return []
+        Use `pop` to safe remove element from dict even if it not exists
+        Use `update` to safe add element to dict even if it exists
+
+        > def get_properties(self):
+        >     properties = super(self.__class__, self).get_properties()
+        >     properties.pop('OLD_ELEMENT', None)
+        >     properties.update(NEW_ELEMENT=None)
+        >     return properties
+
+        """
+        return self._properties
 
     def render(self):
         obj = super(JSONObject, self).render()
 
-        if self.properties:
-            obj.update(properties={key: value.render() for key, value in self.properties.items()})
-        if self.required:
-            obj.update(required=self.required)
-        if self.min_properties:
-            obj.update(minProperties=self.min_properties)
-        if self.max_properties:
-            obj.update(maxProperties=self.max_properties)
-        if self.additional_properties is not None:
-            obj.update(additionalProperties=self.additional_properties)
+        if self._properties:
+            obj.update(
+                properties={key: value.render() for key, value in self.get_properties().items()}
+            )
+        if self._required:
+            obj.update(required=self.get_required())
+        if self._min_properties:
+            obj.update(minProperties=self._min_properties)
+        if self._max_properties:
+            obj.update(maxProperties=self._max_properties)
+        if self._additional_properties is not None:
+            obj.update(additionalProperties=self._additional_properties)
 
         return obj
 
@@ -206,7 +215,8 @@ class JSONSchema(JSONObject):
         schema = super(JSONSchema, self).render()
         schema.update(schema=self.schema)
         if self.definitions:
-            schema.update(definitions={key: value.render() for key, value in self.definitions.items()})
+            schema.update(
+                definitions={key: value.render() for key, value in self.definitions.items()})
         return schema
 
     def validate(self, data):
