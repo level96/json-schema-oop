@@ -38,8 +38,7 @@ class TestJSONType(object):
         (
             {'min_length': 1, 'max_length': 10, 'pattern': '\\d', 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
             {'type': 'string', 'minLength': 1, 'maxLength': 10, 'pattern': '\\d',
-             'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME
-            }
+             'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME}
         ),
     ])
     def test_json_string(self, parameters, expected):
@@ -76,8 +75,8 @@ class TestJSONType(object):
             {'type': 'object', 'properties': {'name': {'type': 'string'}}}
         ),
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'required': ['name']},
-            {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'required': ['name']}
+            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'required': {'name'}},
+            {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'required': {'name'}}
         ),
         (
             {'properties': {'name': JSONSchemaOOP.JSONString()}, 'min_properties': 1},
@@ -159,30 +158,32 @@ class AddressJSONSchemaObject(JSONSchemaOOP.JSONObject):
 
 
 class AddressJSONSchemaObjectV2(AddressJSONSchemaObject):
-    def required_remove(self):
-        return ['city']
+    def get_required(self):
+        required = super(AddressJSONSchemaObjectV2, self).get_required()
+        required.discard('city')
+        required.add('location')
+        return required
 
-    def properties_remove(self):
-        return ['city']
-
-    def required_add(self):
-        return ['location']
-
-    def properties_add(self):
-        return {'location': JSONSchemaOOP.JSONString()}
+    def get_properties(self):
+        props = super(AddressJSONSchemaObjectV2, self).get_properties()
+        props.pop('city', None)
+        props.update(location=JSONSchemaOOP.JSONString())
+        return props
 
 
 class AddressJSONSchemaObjectV3(AddressJSONSchemaObjectV2):
-    def required_add(self):
-        return super(AddressJSONSchemaObjectV3, self).required_add() + ['staff']
+    def get_required(self):
+        required = super(AddressJSONSchemaObjectV3, self).get_required()
+        required.add('staff')
+        return required
 
-    def properties_add(self):
-        obj = super(AddressJSONSchemaObjectV3, self).properties_add()
-        obj.update(staff=JSONSchemaOOP.JSONArray(
+    def get_properties(self):
+        properties = super(AddressJSONSchemaObjectV3, self).get_properties()
+        properties.update(staff=JSONSchemaOOP.JSONArray(
             min_items=1,
             items=[JSONSchemaOOP.JSONString()]
         ))
-        return obj
+        return properties
 
 
 class TestJSONObjectInheritance(object):
@@ -192,7 +193,7 @@ class TestJSONObjectInheritance(object):
         inst_obj = inst.render()
 
         expected = {
-            'required': ['street', 'street_number', 'zip', 'city'],
+            'required': {'street', 'street_number', 'zip', 'city'},
             'type': 'object',
             'properties': {
                 'city': {'type': 'string'},
@@ -208,7 +209,7 @@ class TestJSONObjectInheritance(object):
         inst = AddressJSONSchemaObjectV2()
 
         expected = {
-            'required': ['street', 'zip', 'street_number', 'location'],
+            'required': {'street', 'street_number', 'zip', 'location'},
             'type': 'object',
             'properties': {
                 'street': {'type': 'string'},
@@ -226,7 +227,7 @@ class TestJSONObjectInheritance(object):
         inst = AddressJSONSchemaObjectV3()
 
         expected = {
-            'required': ['staff', 'street', 'zip', 'street_number', 'location'],
+            'required': {'street_number', 'zip', 'street', 'location', 'staff'},
             'type': 'object',
             'properties': {
                 'location': {'type': 'string'},
@@ -268,8 +269,8 @@ class TestFullJSONSchema(object):
             }},
             True
         ),
-
-        # # Errors
+        #
+        # # # Errors
         ({'address': {}}, False),
         ({'address': 'haha'}, False),
         ({'address': {'street': 'musterstreet'}}, False),
@@ -284,8 +285,20 @@ class TestFullJSONSchema(object):
             }},
             False
         ),
-        ({'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], }}, False),
-        ({'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], 'location': 'Berlin'}}, False),
+        (
+            {'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], }},
+            False
+        ),
+        (
+            {
+                'address': {
+                    'street': 'musterstreet',
+                    'street_number': '12 a',
+                    'zip': [1],
+                    'location': 'Berlin'
+                }
+            },
+            False),
 
     ])
     def test_address_full_schema(self, data, is_valid):
@@ -313,7 +326,7 @@ class TestFullJSONSchema(object):
             },
             'definitions': {
                 'address': {
-                    'required': ['staff', 'street', 'zip', 'street_number', 'location'],
+                    'required': {'street_number', 'zip', 'street', 'location', 'staff'},
                     'type': 'object',
                     'properties': {
                         'location': {'type': 'string'},
@@ -337,5 +350,3 @@ class TestFullJSONSchema(object):
         else:
             with pytest.raises(ValidationError):
                 inst.validate(data)
-
-
