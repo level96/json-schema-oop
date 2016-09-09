@@ -12,10 +12,7 @@ class JSONType(object):
             self.type = types
 
         if isinstance(self.type, (tuple, list)):
-            self.type = [
-                t.render() if isinstance(t, (JSONObject, JSONArray, JSONSchemaReference)) else t.type
-                for t in self.type
-            ]
+            self.type = [t.type for t in self.type]
 
     def render(self):
         return {'type': self.type}
@@ -49,9 +46,9 @@ class JSONNumber(JSONType):
 
 class JSONString(JSONType):
     FORMAT_DATETIME = 'date-time'
-    FORMAT_EMAIL = 'date-email'
-    FORMAT_URI = 'date-uri'
-    FORMAT_HOST_NAME = 'host-name'
+    FORMAT_EMAIL = 'email'
+    FORMAT_URI = 'uri'
+    FORMAT_HOST_NAME = 'hostname'
     FORMAT_IPV4 = 'ipv4'
     FORMAT_IPV6 = 'ipv6'
 
@@ -208,6 +205,18 @@ class JSONObject(JSONType):
             obj.update(additionalProperties=self._additional_properties)
 
         return obj
+
+
+class JSONOneOf(JSONType):
+    type = None
+
+    def __init__(self, *types):
+        self._type = types
+
+    def render(self):
+        return {
+            'oneOf': [t.render() for t in self._type]
+        }
 
 
 class JSONSchema(JSONObject):
