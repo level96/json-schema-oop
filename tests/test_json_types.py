@@ -129,6 +129,29 @@ class TestJSONType(object):
 
         assert inst.render() == {'type': 'boolean'}
 
+    @pytest.mark.parametrize(('parameters', 'expected'), [
+        ((), {'type': None}),
+        (
+            (JSONSchemaOOP.JSONNumber(), JSONSchemaOOP.JSONString()),
+            {'type': ['number', 'string']}
+        ),
+        (
+            (JSONSchemaOOP.JSONArray(items=[JSONSchemaOOP.JSONObject()]), JSONSchemaOOP.JSONObject()),
+            {'type': [{'type': 'array', 'items': [{'type': 'object'}]}, {'type': 'object'}]}
+        ),
+        (
+            (JSONSchemaOOP.JSONSchemaReference('image'),
+             JSONSchemaOOP.JSONSchemaReference('video')),
+            {'type': [{'$ref': '#/definitions/image'}, {'$ref': '#/definitions/video'}]}
+        ),
+
+    ])
+    def test_json_type(self, parameters, expected):
+        inst = JSONSchemaOOP.JSONType(*parameters)
+
+        # print("####", inst.render())
+        assert inst.render() == expected
+
     def test_json_schema(self):
         class MySchema(JSONSchemaOOP.JSONSchema):
             properties = {

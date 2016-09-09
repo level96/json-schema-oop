@@ -12,7 +12,10 @@ class JSONType(object):
             self.type = types
 
         if isinstance(self.type, (tuple, list)):
-            self.type = [t.type for t in self.type]
+            self.type = [
+                t.render() if isinstance(t, (JSONObject, JSONArray, JSONSchemaReference)) else t.type
+                for t in self.type
+            ]
 
     def render(self):
         return {'type': self.type}
