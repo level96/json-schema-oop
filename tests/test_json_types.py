@@ -222,6 +222,62 @@ class AddressJSONSchemaObjectV3(AddressJSONSchemaObjectV2):
         return properties
 
 
+class TestJSONSchemaInheritance(object):
+    def test_inherit_definitions(self):
+        class MySchema(JSONSchemaOOP.JSONSchema):
+            definitions = {
+                'def1': JSONSchemaOOP.JSONNumber(),
+                'def2': JSONSchemaOOP.JSONString(),
+            }
+            properties = {
+                'address': JSONSchemaOOP.JSONNull()
+            }
+
+        class MySchemaV2(MySchema):
+            def get_definitions(self):
+                definitions = super(MySchema, self).get_definitions()
+                definitions.update({'def3': JSONSchemaOOP.JSONArray()})
+                definitions.pop('def1')
+                return definitions
+
+        class MySchemaV3(MySchemaV2):
+            def get_definitions(self):
+                definitions = super(MySchemaV3, self).get_definitions()
+                definitions.update({'def4': JSONSchemaOOP.JSONArray()})
+                definitions.pop('def2')
+                return definitions
+
+        schema2 = MySchemaV2().render()
+        schema3 = MySchemaV3().render()
+
+        expected_data_v2 = {
+            'schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'properties': {
+                'address': {'type': 'null'}
+            },
+            'definitions': {
+                'def2': {'type': 'string'},
+                'def3': {'type': 'array'}
+            }
+        }
+
+        expected_data_v3 = {
+            'properties': {
+                'address': {'type': 'null'}
+            },
+            'schema': 'http://json-schema.org/draft-04/schema#',
+            'type': 'object',
+            'definitions': {
+                'def4': {'type': 'array'},
+                'def3': {'type': 'array'}
+            }
+        }
+
+        assert schema2 == expected_data_v2
+        assert schema3 == expected_data_v3
+
+
 class TestJSONObjectInheritance(object):
     def test_inherit_json_object(self):
         inst = AddressJSONSchemaObject()

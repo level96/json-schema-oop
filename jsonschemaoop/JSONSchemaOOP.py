@@ -223,12 +223,20 @@ class JSONSchema(JSONObject):
     schema = 'http://json-schema.org/draft-04/schema#'
     definitions = {}
 
+    def __init__(self, definitions=None, required=None, properties=None):
+        super(JSONSchema, self).__init__(required, properties)
+        self._definitions = definitions if definitions is not None else deepcopy(self.definitions)
+
+    def get_definitions(self):
+        return self._definitions
+
     def render(self):
         schema = super(JSONSchema, self).render()
         schema.update(schema=self.schema)
-        if self.definitions:
+        if self._definitions:
             schema.update(
-                definitions={key: value.render() for key, value in self.definitions.items()})
+                definitions={key: value.render() for key, value in self.get_definitions().items()}
+            )
         return schema
 
     def validate(self, data):
