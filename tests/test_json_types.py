@@ -54,6 +54,7 @@ class TestJSONType(object):
         ({'unique_items': True}, {'uniqueItems': True, 'type': 'array'}),
         ({'min_items': True}, {'minItems': True, 'type': 'array'}),
         ({'max_items': True}, {'maxItems': True, 'type': 'array'}),
+        ({'additional_items': False}, {'additionalItems': False, 'type': 'array'}),
 
         (
             {'min_items': 1, 'max_items': 10, 'unique_items': True, 'items': [JSONSchemaOOP.JSONString()]},

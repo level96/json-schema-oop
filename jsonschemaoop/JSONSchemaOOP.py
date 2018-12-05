@@ -102,15 +102,19 @@ class JSONArray(JSONType):
     unique_items = None
     min_items = None
     max_items = None
+    additional_items = None
     items = []
 
-    def __init__(self, items=[], unique_items=None, min_items=None, max_items=None):
+    def __init__(self, items=[], unique_items=None, min_items=None, max_items=None,
+                 additional_items=None):
         super(JSONArray, self).__init__()
 
         self._items = items if items is not None else self.items
         self._unique_items = unique_items if unique_items is not None else self.unique_items
         self._min_items = min_items if min_items is not None else self.min_items
         self._max_items = max_items if max_items is not None else self.max_items
+        self._additional_items = additional_items if additional_items is not \
+            None else self.additional_items
 
     def render(self):
         obj = super(JSONArray, self).render()
@@ -123,6 +127,8 @@ class JSONArray(JSONType):
             obj.update(minItems=self._min_items)
         if self._max_items:
             obj.update(maxItems=self._max_items)
+        if self._additional_items is not None:
+            obj.update(additionalItems=self._additional_items)
         return obj
 
 
