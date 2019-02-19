@@ -23,6 +23,8 @@ class JSONEnum(JSONType):
     values = []
 
     def __init__(self, values=None):
+        super(JSONEnum, self).__init__()
+
         if not values:
             raise ValueError('Enum should have minimum 1 Value')
 
