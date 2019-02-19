@@ -31,7 +31,7 @@ class JSONEnum(JSONType):
         self.values = values
 
     def render(self):
-        data = super().render()
+        data = super(JSONEnum, self).render()
         data['enum'] = self.values
 
         return data
