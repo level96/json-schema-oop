@@ -63,6 +63,8 @@ class JSONNumber(JSONType):
 
 class JSONString(JSONType):
     FORMAT_DATETIME = 'date-time'
+    FORMAT_DATE = 'date'
+    FORMAT_TIME = 'time'
     FORMAT_EMAIL = 'email'
     FORMAT_URI = 'uri'
     FORMAT_HOST_NAME = 'hostname'
