@@ -18,6 +18,23 @@ class JSONType(object):
         return {'type': self.type}
 
 
+class JSONEnum(JSONType):
+    type = 'string'
+    values = []
+
+    def __init__(self, values=None):
+        if not values:
+            raise ValueError('Enum should have minimum 1 Value')
+
+        self.values = values
+
+    def render(self):
+        data = super().render()
+        data['enum'] = self.values
+
+        return data
+
+
 class JSONNumber(JSONType):
     type = 'number'
     minimum = None
@@ -114,7 +131,7 @@ class JSONArray(JSONType):
         self._min_items = min_items if min_items is not None else self.min_items
         self._max_items = max_items if max_items is not None else self.max_items
         self._additional_items = additional_items if additional_items is not \
-            None else self.additional_items
+                                                     None else self.additional_items
 
     def render(self):
         obj = super(JSONArray, self).render()
@@ -146,8 +163,10 @@ class JSONObject(JSONType):
 
         self._required = set(required if required is not None else deepcopy(self.required))
         self._properties = properties if properties is not None else deepcopy(self.properties)
-        self._min_properties = min_properties if min_properties is not None else deepcopy(self.min_properties)
-        self._max_properties = max_properties if max_properties is not None else deepcopy(self.max_properties)
+        self._min_properties = min_properties if min_properties is not None else deepcopy(
+            self.min_properties)
+        self._max_properties = max_properties if max_properties is not None else deepcopy(
+            self.max_properties)
 
         if additional_properties is not None:
             self._additional_properties = additional_properties

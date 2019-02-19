@@ -8,6 +8,26 @@ from jsonschemaoop import JSONSchemaOOP
 
 class TestJSONType(object):
     @pytest.mark.parametrize(('parameters', 'expected'), [
+        ({'values': ['a', 'b', 'c']}, {"type": "string", "enum": ["a", "b", "c"]}),
+    ])
+    def test_json_enum_success(self, parameters, expected):
+        inst = JSONSchemaOOP.JSONEnum(**parameters)
+
+        inst_obj = inst.render()
+
+        assert inst_obj == expected
+
+    @pytest.mark.parametrize('parameters', [
+        {},
+        {'values': None},
+        {'values': []},
+    ])
+    def test_json_enum_failed(self, parameters):
+        with pytest.raises(ValueError):
+            inst = JSONSchemaOOP.JSONEnum(**parameters)
+            inst.render()
+
+    @pytest.mark.parametrize(('parameters', 'expected'), [
         ({}, {'type': 'number'}),
         ({'minimum': 1}, {'type': 'number', 'minimum': 1}),
         ({'maximum': 2}, {'type': 'number', 'maximum': 2}),
@@ -31,14 +51,15 @@ class TestJSONType(object):
         ({'max_length': 10}, {'type': 'string', 'maxLength': 10}),
         ({'pattern': '\\d'}, {'type': 'string', 'pattern': '\\d'}),
         (
-            {'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
-            {'type': 'string', 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME}
+                {'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
+                {'type': 'string', 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME}
         ),
 
         (
-            {'min_length': 1, 'max_length': 10, 'pattern': '\\d', 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
-            {'type': 'string', 'minLength': 1, 'maxLength': 10, 'pattern': '\\d',
-             'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME}
+                {'min_length': 1, 'max_length': 10, 'pattern': '\\d',
+                 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME},
+                {'type': 'string', 'minLength': 1, 'maxLength': 10, 'pattern': '\\d',
+                 'format': JSONSchemaOOP.JSONString.FORMAT_DATETIME}
         ),
     ])
     def test_json_string(self, parameters, expected):
@@ -50,15 +71,18 @@ class TestJSONType(object):
 
     @pytest.mark.parametrize(('parameters', 'expected'), [
         ({}, {'type': 'array'}),
-        ({'items': [JSONSchemaOOP.JSONString()]}, {'items': [{'type': 'string'}], 'type': 'array'}),
+        ({'items': [JSONSchemaOOP.JSONString()]},
+         {'items': [{'type': 'string'}], 'type': 'array'}),
         ({'unique_items': True}, {'uniqueItems': True, 'type': 'array'}),
         ({'min_items': True}, {'minItems': True, 'type': 'array'}),
         ({'max_items': True}, {'maxItems': True, 'type': 'array'}),
         ({'additional_items': False}, {'additionalItems': False, 'type': 'array'}),
 
         (
-            {'min_items': 1, 'max_items': 10, 'unique_items': True, 'items': [JSONSchemaOOP.JSONString()]},
-            {'minItems': 1, 'maxItems': 10, 'uniqueItems': True, 'items': [{'type': 'string'}], 'type': 'array'}
+                {'min_items': 1, 'max_items': 10, 'unique_items': True,
+                 'items': [JSONSchemaOOP.JSONString()]},
+                {'minItems': 1, 'maxItems': 10, 'uniqueItems': True,
+                 'items': [{'type': 'string'}], 'type': 'array'}
         ),
     ])
     def test_json_array(self, parameters, expected):
@@ -72,40 +96,44 @@ class TestJSONType(object):
 
         ({}, {'type': 'object'}),
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}},
-            {'type': 'object', 'properties': {'name': {'type': 'string'}}}
+                {'properties': {'name': JSONSchemaOOP.JSONString()}},
+                {'type': 'object', 'properties': {'name': {'type': 'string'}}}
         ),
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'required': {'name'}},
-            {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'required': {'name'}}
+                {'properties': {'name': JSONSchemaOOP.JSONString()}, 'required': {'name'}},
+                {'type': 'object', 'properties': {'name': {'type': 'string'}},
+                 'required': {'name'}}
         ),
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'min_properties': 1},
-            {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'minProperties': 1}
+                {'properties': {'name': JSONSchemaOOP.JSONString()}, 'min_properties': 1},
+                {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'minProperties': 1}
         ),
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'max_properties': 10},
-            {'type': 'object', 'properties': {'name': {'type': 'string'}}, 'maxProperties': 10}
+                {'properties': {'name': JSONSchemaOOP.JSONString()}, 'max_properties': 10},
+                {'type': 'object', 'properties': {'name': {'type': 'string'}},
+                 'maxProperties': 10}
         ),
         (
-            {'properties': {'name': JSONSchemaOOP.JSONString()}, 'additional_properties': False},
-            {'additionalProperties': False, 'type': 'object', 'properties': {'name': {'type': 'string'}}}
+                {'properties': {'name': JSONSchemaOOP.JSONString()},
+                 'additional_properties': False},
+                {'additionalProperties': False, 'type': 'object',
+                 'properties': {'name': {'type': 'string'}}}
         ),
 
         (
-            {
-                'properties': {'name': JSONSchemaOOP.JSONString()},
-                'min_properties': 1,
-                'max_properties': 10,
-                'additional_properties': False
-            },
-            {
-                'type': 'object',
-                'properties': {'name': {'type': 'string'}},
-                'additionalProperties': False,
-                'minProperties': 1,
-                'maxProperties': 10
-            }
+                {
+                    'properties': {'name': JSONSchemaOOP.JSONString()},
+                    'min_properties': 1,
+                    'max_properties': 10,
+                    'additional_properties': False
+                },
+                {
+                    'type': 'object',
+                    'properties': {'name': {'type': 'string'}},
+                    'additionalProperties': False,
+                    'minProperties': 1,
+                    'maxProperties': 10
+                }
         ),
     ])
     def test_json_object(self, parameters, expected):
@@ -133,8 +161,8 @@ class TestJSONType(object):
     @pytest.mark.parametrize(('parameters', 'expected'), [
         ((), {'type': None}),
         (
-            (JSONSchemaOOP.JSONNumber(), JSONSchemaOOP.JSONString()),
-            {'type': ['number', 'string']}
+                (JSONSchemaOOP.JSONNumber(), JSONSchemaOOP.JSONString()),
+                {'type': ['number', 'string']}
         )
     ])
     def test_json_type(self, parameters, expected):
@@ -145,18 +173,18 @@ class TestJSONType(object):
     @pytest.mark.parametrize(('parameters', 'expected'), [
         ((), {'oneOf': []}),
         (
-            (JSONSchemaOOP.JSONNumber(), JSONSchemaOOP.JSONString()),
-            {'oneOf': [{'type': 'number'}, {'type': 'string'}]}
+                (JSONSchemaOOP.JSONNumber(), JSONSchemaOOP.JSONString()),
+                {'oneOf': [{'type': 'number'}, {'type': 'string'}]}
         ),
         (
-            (JSONSchemaOOP.JSONArray(items=[JSONSchemaOOP.JSONObject()]),
-             JSONSchemaOOP.JSONObject()),
-            {'oneOf': [{'type': 'array', 'items': [{'type': 'object'}]}, {'type': 'object'}]}
+                (JSONSchemaOOP.JSONArray(items=[JSONSchemaOOP.JSONObject()]),
+                 JSONSchemaOOP.JSONObject()),
+                {'oneOf': [{'type': 'array', 'items': [{'type': 'object'}]}, {'type': 'object'}]}
         ),
         (
-            (JSONSchemaOOP.JSONSchemaReference('image'),
-             JSONSchemaOOP.JSONSchemaReference('video')),
-            {'oneOf': [{'$ref': '#/definitions/image'}, {'$ref': '#/definitions/video'}]}
+                (JSONSchemaOOP.JSONSchemaReference('image'),
+                 JSONSchemaOOP.JSONSchemaReference('video')),
+                {'oneOf': [{'$ref': '#/definitions/image'}, {'$ref': '#/definitions/video'}]}
         ),
     ])
     def test_json_one_of(self, parameters, expected):
@@ -343,24 +371,24 @@ class TestJSONObjectInheritance(object):
 class TestFullJSONSchema(object):
     @pytest.mark.parametrize(('data', 'is_valid'), [
         (
-            {'address': {
-                'street': 'musterstreet',
-                'street_number': '12 a',
-                'zip': 12345,
-                'location': 'Berlin',
-                'staff': ['Hans']
-            }},
-            True
+                {'address': {
+                    'street': 'musterstreet',
+                    'street_number': '12 a',
+                    'zip': 12345,
+                    'location': 'Berlin',
+                    'staff': ['Hans']
+                }},
+                True
         ),
         (
-            {'address': {
-                'street': 'musterstreet',
-                'street_number': '12 a',
-                'zip': '12345',
-                'location': 'Berlin',
-                'staff': ['Hans']
-            }},
-            True
+                {'address': {
+                    'street': 'musterstreet',
+                    'street_number': '12 a',
+                    'zip': '12345',
+                    'location': 'Berlin',
+                    'staff': ['Hans']
+                }},
+                True
         ),
         #
         # # # Errors
@@ -369,29 +397,29 @@ class TestFullJSONSchema(object):
         ({'address': {'street': 'musterstreet'}}, False),
         ({'address': {'street': 'musterstreet', 'street_number': '12 a'}}, False),
         (
-            {'address': {
-                'street': 'musterstreet',
-                'street_number': '12 a',
-                'zip': '12345',
-                'location': 'Berlin',
-                'staff': []
-            }},
-            False
-        ),
-        (
-            {'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], }},
-            False
-        ),
-        (
-            {
-                'address': {
+                {'address': {
                     'street': 'musterstreet',
                     'street_number': '12 a',
-                    'zip': [1],
-                    'location': 'Berlin'
-                }
-            },
-            False),
+                    'zip': '12345',
+                    'location': 'Berlin',
+                    'staff': []
+                }},
+                False
+        ),
+        (
+                {'address': {'street': 'musterstreet', 'street_number': '12 a', 'zip': [1], }},
+                False
+        ),
+        (
+                {
+                    'address': {
+                        'street': 'musterstreet',
+                        'street_number': '12 a',
+                        'zip': [1],
+                        'location': 'Berlin'
+                    }
+                },
+                False),
 
     ])
     def test_address_full_schema(self, data, is_valid):
