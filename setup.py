@@ -5,7 +5,7 @@
 from distutils.core import setup
 
 setup(
-      name='JSON Schema OOP',
+      name='JSONSchemaOOP',
       version='2.4.0',
       description='OOP JSON Schema lets you write JSON-Schema classes and inherits them',
       author='Trung Phan',
